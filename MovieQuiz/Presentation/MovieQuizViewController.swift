@@ -1,24 +1,13 @@
 import UIKit
 
 final class MovieQuizViewController: UIViewController {
+
+    @IBOutlet private weak var imageView: UIImageView!
+    @IBOutlet private weak var textLabel: UILabel!
+    @IBOutlet private weak var counterLabel: UILabel!
     
-    private struct QuizStepViewModel {
-        let image: UIImage
-        let question: String
-        let questionNumber: String
-    }
-    
-    private struct QuizQuestion {
-        let image: String
-        let text: String
-        let correctAnswer: Bool
-    }
-    
-    private struct QuizResultsViewModel {
-        let title: String
-        let text: String
-        let buttonText: String
-    }
+    private var currentQuestionIndex = 0
+    private var correctAnswers = 0
     
     private let questions: [QuizQuestion] = [
         QuizQuestion(
@@ -63,15 +52,23 @@ final class MovieQuizViewController: UIViewController {
             correctAnswer: false)
     ]
     
-    private var currentQuestionIndex = 0
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        show(quiz: convert(model: questions[currentQuestionIndex]))
+    }
+
+    @IBAction private func yesButtonClicked(_ sender: UIButton) {
+        checkAnswer(true)
+    }
     
-    private var correctAnswers = 0
+    @IBAction private func noButtonClicked(_ sender: UIButton) {
+        checkAnswer(false)
+    }
     
-    @IBOutlet private weak var imageView: UIImageView!
-    
-    @IBOutlet private weak var textLabel: UILabel!
-    
-    @IBOutlet private weak var counterLabel: UILabel!
+    private func checkAnswer(_ answer: Bool) {
+        let isCorrect = answer == questions[currentQuestionIndex].correctAnswer
+        showAnswerResult(isCorrect: isCorrect)
+    }
     
     private func convert(model: QuizQuestion) -> QuizStepViewModel {
         return QuizStepViewModel(image: UIImage(named: model.image) ?? UIImage(),
@@ -103,13 +100,15 @@ final class MovieQuizViewController: UIViewController {
     }
     
     private func showAnswerResult(isCorrect: Bool) {
-        isCorrect == true ? makeBorder(color: UIColor.ypGreen): makeBorder(color: UIColor.ypRed)
+        isCorrect == true
+            ? makeBorder(color: UIColor.ypGreen)
+            : makeBorder(color: UIColor.ypRed)
         isCorrect ? correctAnswers += 1 : nil
         view.isUserInteractionEnabled = false
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            self.showNextQuestionOrResult()
-            self.imageView.layer.borderWidth = 0
-            self.view.isUserInteractionEnabled = true}
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            self?.showNextQuestionOrResult()
+            self?.imageView.layer.borderWidth = 0
+            self?.view.isUserInteractionEnabled = true}
     }
     
     private func showNextQuestionOrResult() {
@@ -121,22 +120,5 @@ final class MovieQuizViewController: UIViewController {
             currentQuestionIndex += 1
             show(quiz: convert(model: questions[currentQuestionIndex]))
         }
-    }
-    
-    @IBAction private func yesButtonClicked(_ sender: UIButton) {
-        guard questions[currentQuestionIndex].correctAnswer == true else {
-            return showAnswerResult(isCorrect: false)}
-        return showAnswerResult(isCorrect: true)
-    }
-    
-    @IBAction private func noButtonClicked(_ sender: UIButton) {
-        guard questions[currentQuestionIndex].correctAnswer == false else {
-            return showAnswerResult(isCorrect: false)}
-        return showAnswerResult(isCorrect: true)
-    }
-    
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        show(quiz: convert(model: questions[currentQuestionIndex]))
     }
 }
