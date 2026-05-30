@@ -100,7 +100,6 @@ final class MovieQuizViewController: UIViewController {
         imageView.layer.masksToBounds = true
         imageView.layer.borderWidth = 8
         imageView.layer.borderColor = color.cgColor
-        imageView.layer.cornerRadius = 20
     }
     
     private func showAnswerResult(isCorrect: Bool) {

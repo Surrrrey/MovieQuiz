@@ -51,6 +51,11 @@
                                         <constraints>
                                             <constraint firstAttribute="width" secondItem="ZxV-hk-2Bg" secondAttribute="height" multiplier="2:3" priority="900" id="8FW-Ge-r43"/>
                                         </constraints>
+                                        <userDefinedRuntimeAttributes>
+                                            <userDefinedRuntimeAttribute type="number" keyPath="layer.cornerRadius">
+                                                <integer key="value" value="20"/>
+                                            </userDefinedRuntimeAttribute>
+                                        </userDefinedRuntimeAttributes>
                                     </imageView>
                                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" verticalCompressionResistancePriority="1000" text="Рейтинг этого фильма меньше чем 5?" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="2" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="wcs-5w-I4z" userLabel="Question Label">
                                         <rect key="frame" x="0.0" y="588" width="374" height="54"/>
