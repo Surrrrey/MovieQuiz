@@ -47,12 +47,20 @@ final class QuestionFactory: QuestionFactoryProtocol {
             correctAnswer: false)
     ]
     
+    private var arrayOfQuestions = [QuizQuestion]()
     func requestNextQuestion() {
-        guard let index = (0 ..< questions.count).randomElement() else {
+        guard !arrayOfQuestions.isEmpty else {
+            arrayOfQuestions = questions
+            requestNextQuestion()
+            return
+        }
+        guard let index = (0 ..< arrayOfQuestions.count).randomElement() else {
             delegate?.didReciveNextQuestion(question: nil)
             return
         }
-        let question = questions[safe: index]
+        let question = arrayOfQuestions[safe: index]
         delegate?.didReciveNextQuestion(question: question)
+        arrayOfQuestions.remove(at: index)
+        
     }
 }
