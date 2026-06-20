@@ -1,62 +1,37 @@
 import UIKit
 
 final class MovieQuizViewController: UIViewController {
-
+    
+    // MARK: - IBOutlets
+    
     @IBOutlet private weak var imageView: UIImageView!
     @IBOutlet private weak var textLabel: UILabel!
     @IBOutlet private weak var counterLabel: UILabel!
     
-    private var currentQuestionIndex = 0
-    private var correctAnswers = 0
+    // MARK: - Properties
     
-    private let questions: [QuizQuestion] = [
-        QuizQuestion(
-            image: "The Godfather",
-            text: "Рейтинг этого фильма больше чем 6?",
-            correctAnswer: true),
-        QuizQuestion(
-            image: "The Dark Knight",
-            text: "Рейтинг этого фильма больше чем 6?",
-            correctAnswer: true),
-        QuizQuestion(
-            image: "Kill Bill",
-            text: "Рейтинг этого фильма больше чем 6?",
-            correctAnswer: true),
-        QuizQuestion(
-            image: "The Avengers",
-            text: "Рейтинг этого фильма больше чем 6?",
-            correctAnswer: true),
-        QuizQuestion(
-            image: "Deadpool",
-            text: "Рейтинг этого фильма больше чем 6?",
-            correctAnswer: true),
-        QuizQuestion(
-            image: "The Green Knight",
-            text: "Рейтинг этого фильма больше чем 6?",
-            correctAnswer: true),
-        QuizQuestion(
-            image: "Old",
-            text: "Рейтинг этого фильма больше чем 6?",
-            correctAnswer: false),
-        QuizQuestion(
-            image: "The Ice Age Adventures of Buck Wild",
-            text: "Рейтинг этого фильма больше чем 6?",
-            correctAnswer: false),
-        QuizQuestion(
-            image: "Tesla",
-            text: "Рейтинг этого фильма больше чем 6?",
-            correctAnswer: false),
-        QuizQuestion(
-            image: "Vivarium",
-            text: "Рейтинг этого фильма больше чем 6?",
-            correctAnswer: false)
-    ]
+    private let questionsAmount = 10
+    
+    private var questionFactory: QuestionFactoryProtocol?
+    private var currentQuestion: QuizQuestion?
+    private var gameResult: GameResult?
+    
+    private var alertPresenter = AlertPresenter()
+    private var statisticService: StatisticServiceProtocol = StatisticService()
+    
+    private var currentQuestionIndex = 1
+    
+    // MARK: - Lifecycle
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        show(quiz: convert(model: questions[currentQuestionIndex]))
+        
+        addQuestionFactory()
+        addGameResult()
     }
-
+    
+    // MARK: - IBActions
+    
     @IBAction private func yesButtonClicked(_ sender: UIButton) {
         checkAnswer(true)
     }
@@ -65,15 +40,32 @@ final class MovieQuizViewController: UIViewController {
         checkAnswer(false)
     }
     
+    // MARK: - Private Methods
+    
+    private func addQuestionFactory() {
+        let questionFactory = QuestionFactory()
+        
+        questionFactory.delegate = self
+        
+        self.questionFactory = questionFactory
+        
+        questionFactory.requestNextQuestion()
+    }
+    
+    private func addGameResult() {
+        self.gameResult = GameResult(correctAnswers: 0, totalAnswers: self.questionsAmount, date: Date())
+    }
+    
     private func checkAnswer(_ answer: Bool) {
-        let isCorrect = answer == questions[currentQuestionIndex].correctAnswer
+        guard let currentQuestion else { return }
+        let isCorrect = answer == currentQuestion.correctAnswer
         showAnswerResult(isCorrect: isCorrect)
     }
     
     private func convert(model: QuizQuestion) -> QuizStepViewModel {
         return QuizStepViewModel(image: UIImage(named: model.image) ?? UIImage(),
                                  question: model.text,
-                                 questionNumber: "\(currentQuestionIndex + 1)/\(questions.count)")
+                                 questionNumber: "\(currentQuestionIndex)/\(questionsAmount)")
     }
     
     private func show(quiz step: QuizStepViewModel) {
@@ -82,15 +74,19 @@ final class MovieQuizViewController: UIViewController {
         imageView.image = step.image
     }
     
+    
     private func show(quiz result: QuizResultsViewModel) {
-        let alert = UIAlertController(title: result.title, message: result.text, preferredStyle: .alert)
-        let action = UIAlertAction(title: result.buttonText, style: .default) { _ in
-            self.currentQuestionIndex = 0
-            self.correctAnswers = 0
-            self.show(quiz: self.convert(model: self.questions[self.currentQuestionIndex]))
+        let model = AlertModel(title: result.title, message: result.text, buttonText: result.buttonText) { [weak self] in
+            guard let self = self else { return }
+            self.restartGame()
         }
-        alert.addAction(action)
-        self.present(alert, animated: true, completion: nil)
+        alertPresenter.show(in: self, model: model)
+    }
+    
+    private func restartGame() {
+        self.currentQuestionIndex = 1
+        self.gameResult?.correctAnswers = 0
+        self.questionFactory?.requestNextQuestion()
     }
     
     private func makeBorder(color: UIColor) {
@@ -101,24 +97,46 @@ final class MovieQuizViewController: UIViewController {
     
     private func showAnswerResult(isCorrect: Bool) {
         isCorrect == true
-            ? makeBorder(color: UIColor.ypGreen)
-            : makeBorder(color: UIColor.ypRed)
-        isCorrect ? correctAnswers += 1 : nil
+        ? makeBorder(color: UIColor.ypGreen)
+        : makeBorder(color: UIColor.ypRed)
+        isCorrect ? gameResult?.correctAnswers += 1 : nil
         view.isUserInteractionEnabled = false
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-            self?.showNextQuestionOrResult()
-            self?.imageView.layer.borderWidth = 0
-            self?.view.isUserInteractionEnabled = true}
+            guard let self = self else { return }
+            self.showNextQuestionOrResult()
+            self.imageView.layer.borderWidth = 0
+            self.view.isUserInteractionEnabled = true}
     }
     
     private func showNextQuestionOrResult() {
-        if currentQuestionIndex == questions.count - 1 {
+        if currentQuestionIndex == questionsAmount {
+            guard let gameResult else { return }
+            statisticService.store(game: gameResult)
             show(quiz: QuizResultsViewModel(title: "Этот раунд окончен!",
-                                            text: "Ваш результат: \(correctAnswers)/\(questions.count)",
+                                            text: "Ваш результат: \(gameResult.correctAnswers)/\(gameResult.totalAnswers)\n" +
+                                            "Количество сыграных квизов: \(statisticService.gamesCount)\n" +
+                                            "Рекорд: \(statisticService.bestGame.correctAnswers)/\(statisticService.bestGame.totalAnswers) (\(statisticService.bestGame.date.dateTimeString))\n" +
+                                            "Средняя точность: \(String(format: "%.2f", statisticService.totalAccuracy))%",
                                             buttonText: "Сыграть ещё раз"))
         } else {
             currentQuestionIndex += 1
-            show(quiz: convert(model: questions[currentQuestionIndex]))
+            questionFactory?.requestNextQuestion()
         }
     }
 }
+// MARK: - Extensions
+// MARK: - QuestionFactoryDelegate
+
+extension MovieQuizViewController: QuestionFactoryDelegate {
+    
+    
+    func didReceiveNextQuestion(question: QuizQuestion?) {
+        guard let question else { return }
+        currentQuestion = question
+        let viewModel = convert(model: question)
+        DispatchQueue.main.async { [weak self] in
+            self?.show(quiz: viewModel)
+        }
+    }
+}
+
