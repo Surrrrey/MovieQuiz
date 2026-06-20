@@ -2,6 +2,8 @@ import Foundation
 
 final class QuestionFactory: QuestionFactoryProtocol {
     
+    // MARK: - Properties
+    
     var delegate: QuestionFactoryDelegate?
     
     private let questions: [QuizQuestion] = [
@@ -48,19 +50,23 @@ final class QuestionFactory: QuestionFactoryProtocol {
     ]
     
     private var arrayOfQuestions = [QuizQuestion]()
+    
+    // MARK: - Public Methods
+    
     func requestNextQuestion() {
-        guard !arrayOfQuestions.isEmpty else {
+        if arrayOfQuestions.isEmpty {
             arrayOfQuestions = questions
-            requestNextQuestion()
-            return
         }
-        guard let index = (0 ..< arrayOfQuestions.count).randomElement() else {
-            delegate?.didReciveNextQuestion(question: nil)
-            return
-        }
-        let question = arrayOfQuestions[safe: index]
-        delegate?.didReciveNextQuestion(question: question)
-        arrayOfQuestions.remove(at: index)
         
+        guard let index = (0 ..< arrayOfQuestions.count).randomElement() else {
+            delegate?.didReceiveNextQuestion(question: nil)
+            return
+        }
+        
+        let question = arrayOfQuestions[index]
+        
+        delegate?.didReceiveNextQuestion(question: question)
+        
+        arrayOfQuestions.remove(at: index)
     }
 }

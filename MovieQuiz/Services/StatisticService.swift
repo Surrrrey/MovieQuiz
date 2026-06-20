@@ -1,6 +1,9 @@
 import Foundation
 
-class StatisticService: StatisticServiceProtocol {
+final class StatisticService: StatisticServiceProtocol {
+    
+    // MARK: - Keys
+    
     private enum Keys: String {
         case gamesCount //счётчик сыгранных игр
         case bestGameCorrectAnswers //рекордное количество правильных ответов
@@ -9,15 +12,13 @@ class StatisticService: StatisticServiceProtocol {
         case totalCorrectAnswers //общее количество верных ответов
     }
     
+    //MARK: - Properties
+    
     private let storage: UserDefaults = .standard
     
     var gamesCount: Int {
-        get {
-            storage.integer(forKey: Keys.gamesCount.rawValue)
-        }
-        set {
-            storage.set(newValue, forKey: Keys.gamesCount.rawValue)
-        }
+        get { storage.integer(forKey: Keys.gamesCount.rawValue) }
+        set { storage.set(newValue, forKey: Keys.gamesCount.rawValue) }
     }
     
     var bestGame: GameResult {
@@ -34,10 +35,10 @@ class StatisticService: StatisticServiceProtocol {
     }
     
     var totalAccuracy: Double {
-        get {
-            getTotalAccuracy()
-        }
+        get { getTotalAccuracy() }
     }
+    
+    // MARK: - Private Properties
     
     private var totalCorrectAnswers: Int {
         get {
@@ -47,11 +48,8 @@ class StatisticService: StatisticServiceProtocol {
             storage.set(newValue, forKey: Keys.totalCorrectAnswers.rawValue)
         }
     }
-    
-    private func getTotalAccuracy() -> Double {
-        guard gamesCount != 0 else { return 0 }
-        return Double(totalCorrectAnswers) / Double(gamesCount * 10) * 100
-    }
+
+    // MARK: - Public Methods
     
     func store(game result: GameResult) {
         gamesCount += 1
@@ -61,5 +59,10 @@ class StatisticService: StatisticServiceProtocol {
         }
     }
     
-    
+    // MARK: - Private Methods
+
+    private func getTotalAccuracy() -> Double {
+        guard gamesCount != 0 else { return 0 }
+        return Double(totalCorrectAnswers) / Double(gamesCount * 10) * 100
+    }
 }

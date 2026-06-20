@@ -1,39 +1,36 @@
 import UIKit
 
-final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
-
+final class MovieQuizViewController: UIViewController {
+    
+    // MARK: - IBOutlets
+    
     @IBOutlet private weak var imageView: UIImageView!
     @IBOutlet private weak var textLabel: UILabel!
     @IBOutlet private weak var counterLabel: UILabel!
     
+    // MARK: - Properties
+    
     private let questionsAmount = 10
+    
     private var questionFactory: QuestionFactoryProtocol?
     private var currentQuestion: QuizQuestion?
     private var gameResult: GameResult?
+    
     private var alertPresenter = AlertPresenter()
     private var statisticService: StatisticServiceProtocol = StatisticService()
     
     private var currentQuestionIndex = 1
     
+    // MARK: - Lifecycle
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        let questionFactory = QuestionFactory()
-        questionFactory.delegate = self
-        self.questionFactory = questionFactory
-        questionFactory.requestNextQuestion()
-        self.gameResult = GameResult(correctAnswers: 0, totalAnswers: self.questionsAmount, date: Date())
+        
+        addQuestionFactory()
+        addGameResult()
     }
-
-    // MARK: - QuestionFactoryDelegate
     
-    func didReciveNextQuestion(question: QuizQuestion?) {
-        guard let question else { return }
-        currentQuestion = question
-        let viewModel = convert(model: question)
-        DispatchQueue.main.async { [weak self] in
-            self?.show(quiz: viewModel)
-        }
-    }
+    // MARK: - IBActions
     
     @IBAction private func yesButtonClicked(_ sender: UIButton) {
         checkAnswer(true)
@@ -41,6 +38,22 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     
     @IBAction private func noButtonClicked(_ sender: UIButton) {
         checkAnswer(false)
+    }
+    
+    // MARK: - Private Methods
+    
+    private func addQuestionFactory() {
+        let questionFactory = QuestionFactory()
+        
+        questionFactory.delegate = self
+        
+        self.questionFactory = questionFactory
+        
+        questionFactory.requestNextQuestion()
+    }
+    
+    private func addGameResult() {
+        self.gameResult = GameResult(correctAnswers: 0, totalAnswers: self.questionsAmount, date: Date())
     }
     
     private func checkAnswer(_ answer: Bool) {
@@ -84,8 +97,8 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     
     private func showAnswerResult(isCorrect: Bool) {
         isCorrect == true
-            ? makeBorder(color: UIColor.ypGreen)
-            : makeBorder(color: UIColor.ypRed)
+        ? makeBorder(color: UIColor.ypGreen)
+        : makeBorder(color: UIColor.ypRed)
         isCorrect ? gameResult?.correctAnswers += 1 : nil
         view.isUserInteractionEnabled = false
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
@@ -108,6 +121,21 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         } else {
             currentQuestionIndex += 1
             questionFactory?.requestNextQuestion()
+        }
+    }
+}
+// MARK: - Extensions
+// MARK: - QuestionFactoryDelegate
+
+extension MovieQuizViewController: QuestionFactoryDelegate {
+    
+    
+    func didReceiveNextQuestion(question: QuizQuestion?) {
+        guard let question else { return }
+        currentQuestion = question
+        let viewModel = convert(model: question)
+        DispatchQueue.main.async { [weak self] in
+            self?.show(quiz: viewModel)
         }
     }
 }
