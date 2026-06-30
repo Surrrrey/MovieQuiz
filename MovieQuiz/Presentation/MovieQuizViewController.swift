@@ -7,6 +7,7 @@ final class MovieQuizViewController: UIViewController {
     @IBOutlet private weak var imageView: UIImageView!
     @IBOutlet private weak var textLabel: UILabel!
     @IBOutlet private weak var counterLabel: UILabel!
+    @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
     
     // MARK: - Properties
     
@@ -26,8 +27,10 @@ final class MovieQuizViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        isVisibleLoadingIndicator(status: true)
         addQuestionFactory()
         addGameResult()
+        questionFactory?.loadData()
     }
     
     // MARK: - IBActions
@@ -43,9 +46,7 @@ final class MovieQuizViewController: UIViewController {
     // MARK: - Private Methods
     
     private func addQuestionFactory() {
-        let questionFactory = QuestionFactory()
-        
-        questionFactory.delegate = self
+        let questionFactory = QuestionFactory(delegate: self, moviesLoader: MoviesLoader())
         
         self.questionFactory = questionFactory
         
@@ -63,7 +64,7 @@ final class MovieQuizViewController: UIViewController {
     }
     
     private func convert(model: QuizQuestion) -> QuizStepViewModel {
-        return QuizStepViewModel(image: UIImage(named: model.image) ?? UIImage(),
+        return QuizStepViewModel(image: UIImage(data: model.image) ?? UIImage(),
                                  question: model.text,
                                  questionNumber: "\(currentQuestionIndex)/\(questionsAmount)")
     }
@@ -123,12 +124,46 @@ final class MovieQuizViewController: UIViewController {
             questionFactory?.requestNextQuestion()
         }
     }
+    
+    private func isVisibleLoadingIndicator(status: Bool) {
+        if status == true {
+            activityIndicator.isHidden = false
+            activityIndicator.startAnimating()
+        } else {
+            activityIndicator.isHidden = true
+            activityIndicator.stopAnimating()
+        }
+    }
+    
+    private func showNetworkError() {
+        isVisibleLoadingIndicator(status: false)
+       
+        let errorModel = AlertModel(title: "Что-то пошло не так(",
+                                    message: "Невозможно загрузить данные",
+                                    buttonText: "Попробовать ещё раз") { [weak self] in
+            guard let self = self else { return }
+            self.restartGame()
+            isVisibleLoadingIndicator(status: true)
+            questionFactory?.loadData()
+        }
+        
+        alertPresenter.show(in: self, model: errorModel)
+    }
 }
+
 // MARK: - Extensions
 // MARK: - QuestionFactoryDelegate
 
 extension MovieQuizViewController: QuestionFactoryDelegate {
     
+    func didLoadDataFromServer() {
+        isVisibleLoadingIndicator(status: false)
+        questionFactory?.requestNextQuestion()
+    }
+    
+    func didFailToLoadData(with error: any Error) {
+        showNetworkError()
+    }
     
     func didReceiveNextQuestion(question: QuizQuestion?) {
         guard let question else { return }
