@@ -112,6 +112,9 @@
                                     </stackView>
                                 </subviews>
                             </stackView>
+                            <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" style="medium" translatesAutoresizingMaskIntoConstraints="NO" id="FOp-pe-oQP">
+                                <rect key="frame" x="197" y="438" width="20" height="20"/>
+                            </activityIndicatorView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                         <color key="backgroundColor" name="YP Black"/>
@@ -120,9 +123,12 @@
                             <constraint firstItem="JzJ-cu-Vxe" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="20" id="SdN-nj-tFy"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="JzJ-cu-Vxe" secondAttribute="trailing" constant="20" id="abA-QL-0Iy"/>
                             <constraint firstItem="JzJ-cu-Vxe" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" constant="10" id="i0e-at-ry2"/>
+                            <constraint firstItem="FOp-pe-oQP" firstAttribute="centerY" secondItem="8bC-Xf-vdC" secondAttribute="centerY" id="tvo-wF-OWH"/>
+                            <constraint firstItem="FOp-pe-oQP" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="usZ-ta-Vmw"/>
                         </constraints>
                     </view>
                     <connections>
+                        <outlet property="activityIndicator" destination="FOp-pe-oQP" id="ElR-9g-KRd"/>
                         <outlet property="counterLabel" destination="mor-tu-pvg" id="U3u-gv-qZy"/>
                         <outlet property="imageView" destination="ZxV-hk-2Bg" id="aVd-YK-bxI"/>
                         <outlet property="textLabel" destination="wcs-5w-I4z" id="QJC-jq-0Dd"/>

@@ -12,7 +12,7 @@ final class StatisticService: StatisticServiceProtocol {
         case totalCorrectAnswers //общее количество верных ответов
     }
     
-    //MARK: - Properties
+    // MARK: - Properties
     
     private let storage: UserDefaults = .standard
     

@@ -4,69 +4,130 @@ final class QuestionFactory: QuestionFactoryProtocol {
     
     // MARK: - Properties
     
-    var delegate: QuestionFactoryDelegate?
+    private weak var delegate: QuestionFactoryDelegate?
+    private let moviesLoader: MoviesLoadingProtocol
     
-    private let questions: [QuizQuestion] = [
-        QuizQuestion(
-            image: "The Godfather",
-            text: "Рейтинг этого фильма больше чем 6?",
-            correctAnswer: true),
-        QuizQuestion(
-            image: "The Dark Knight",
-            text: "Рейтинг этого фильма больше чем 6?",
-            correctAnswer: true),
-        QuizQuestion(
-            image: "Kill Bill",
-            text: "Рейтинг этого фильма больше чем 6?",
-            correctAnswer: true),
-        QuizQuestion(
-            image: "The Avengers",
-            text: "Рейтинг этого фильма больше чем 6?",
-            correctAnswer: true),
-        QuizQuestion(
-            image: "Deadpool",
-            text: "Рейтинг этого фильма больше чем 6?",
-            correctAnswer: true),
-        QuizQuestion(
-            image: "The Green Knight",
-            text: "Рейтинг этого фильма больше чем 6?",
-            correctAnswer: true),
-        QuizQuestion(
-            image: "Old",
-            text: "Рейтинг этого фильма больше чем 6?",
-            correctAnswer: false),
-        QuizQuestion(
-            image: "The Ice Age Adventures of Buck Wild",
-            text: "Рейтинг этого фильма больше чем 6?",
-            correctAnswer: false),
-        QuizQuestion(
-            image: "Tesla",
-            text: "Рейтинг этого фильма больше чем 6?",
-            correctAnswer: false),
-        QuizQuestion(
-            image: "Vivarium",
-            text: "Рейтинг этого фильма больше чем 6?",
-            correctAnswer: false)
-    ]
+    private var moviesFromData = [MostPopularMovie]()
+    private var arrayOfMovies = [MostPopularMovie]()
+    private var currentMovie: MostPopularMovie?
     
-    private var arrayOfQuestions = [QuizQuestion]()
+    // MARK: MOCK
+    ///private let questions: [QuizQuestion] = [
+    ///QuizQuestion(image: "The Godfather",text: "Рейтинг этого фильма больше чем 6?",correctAnswer: true),
+    ///QuizQuestion(image: "The Dark Knight",text: "Рейтинг этого фильма больше чем 6?",correctAnswer: true),
+    ///QuizQuestion(image: "Kill Bill",text: "Рейтинг этого фильма больше чем 6?",correctAnswer: true),
+    ///QuizQuestion(image: "The Avengers",text: "Рейтинг этого фильма больше чем 6?",correctAnswer: true),
+    ///QuizQuestion(image: "Deadpool",text: "Рейтинг этого фильма больше чем 6?",correctAnswer: true),
+    ///QuizQuestion(image: "The Green Knight",text: "Рейтинг этого фильма больше чем 6?",correctAnswer: true),
+    ///QuizQuestion(image: "Old",text: "Рейтинг этого фильма больше чем 6?",correctAnswer: false),
+    ///QuizQuestion(image: "The Ice Age Adventures of Buck Wild",text: "Рейтинг этого фильма больше чем 6?",correctAnswer: false),
+    ///QuizQuestion(image: "Tesla",text: "Рейтинг этого фильма больше чем 6?",correctAnswer: false),
+    ///QuizQuestion(image: "Vivarium",text: "Рейтинг этого фильма больше чем 6?",correctAnswer: false)
+    ///]
+    
+    // MARK: - Init
+    
+    init(delegate: QuestionFactoryDelegate?, moviesLoader: MoviesLoadingProtocol) {
+        self.delegate = delegate
+        self.moviesLoader = moviesLoader
+    }
     
     // MARK: - Public Methods
     
     func requestNextQuestion() {
-        if arrayOfQuestions.isEmpty {
-            arrayOfQuestions = questions
+        randomMovie()
+        
+        DispatchQueue.global().async { [weak self] in
+            guard let self,
+                  let movie = currentMovie
+            else { return }
+            
+            let question = makeQuestion(from: movie)
+            
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self else { return }
+                
+                self.delegate?.didReceiveNextQuestion(question: question)
+            }
+        }
+    }
+    
+    func loadData() {
+        moviesLoader.loadMovies { [weak self] result in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                switch result {
+                case .success(let mostPopularMovies):
+                    self.moviesFromData = mostPopularMovies.items
+                    self.delegate?.didLoadDataFromServer()
+                case .failure(let error):
+                    self.delegate?.didFailToLoadData(with: error)
+                }
+            }
+        }
+    }
+    
+    // MARK: - Private Methods
+    
+    private func randomMovie() {
+        if arrayOfMovies.isEmpty { makeArrayOfRandomMovies() }
+        
+        let index = (0..<self.arrayOfMovies.count).randomElement() ?? 0
+        
+        currentMovie = arrayOfMovies[safe:index]
+        
+        arrayOfMovies.remove(at: index)
+    }
+    
+    private func makeArrayOfRandomMovies() {
+        arrayOfMovies.removeAll()
+        for _ in 1...10 {
+            let index = (0..<self.moviesFromData.count).randomElement() ?? 0
+            guard let movieForQuestion = self.moviesFromData[safe: index] else { return }
+            self.arrayOfMovies.append(movieForQuestion)
+            self.moviesFromData.remove(at: index)
+        }
+    }
+    
+    private func loadImageData() -> Data {
+        var imageData = Data()
+        if let currentMovie = currentMovie {
+            do {
+                imageData = try Data(contentsOf: currentMovie.imageURL)
+            } catch {
+                _ = AlertModel(title: "Что-то пошло не так(",
+                                            message: ("Ошибка при загрузке изображения"),
+                                            buttonText: "Попробовать ещё раз") { [weak self] in
+                    guard let self = self else { return }
+                    _ = loadImageData()
+                }
+            }
+        }
+        return imageData
+    }
+    
+    private func makeQuestion(from movie: MostPopularMovie) -> QuizQuestion? {
+        
+        let imageData = loadImageData()
+        
+        let rating = Float(movie.rating) ?? 0
+        
+        let numInQuestion: Int
+        
+        if Int(rating) != 0 && Int(rating) < 9 {
+            guard let randomNumber = (Int(rating)-1...Int(rating)+1).randomElement() else { return nil }
+            numInQuestion = randomNumber
+        } else {
+            guard let randomNumber = (Int(rating)-1...Int(rating)).randomElement() else { return nil }
+            numInQuestion = randomNumber
         }
         
-        guard let index = (0 ..< arrayOfQuestions.count).randomElement() else {
-            delegate?.didReceiveNextQuestion(question: nil)
-            return
-        }
+        let text = "Рейтинг этого фильма больше чем \(numInQuestion)?"
         
-        let question = arrayOfQuestions[index]
+        let correctAnswer = rating > Float(numInQuestion)
         
-        delegate?.didReceiveNextQuestion(question: question)
-        
-        arrayOfQuestions.remove(at: index)
+        return QuizQuestion(image: imageData,
+                            text: text,
+                            correctAnswer: correctAnswer)
     }
 }
