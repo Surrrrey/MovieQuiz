@@ -49,8 +49,6 @@ final class MovieQuizViewController: UIViewController {
         let questionFactory = QuestionFactory(delegate: self, moviesLoader: MoviesLoader())
         
         self.questionFactory = questionFactory
-        
-        questionFactory.requestNextQuestion()
     }
     
     private func addGameResult() {
@@ -73,6 +71,9 @@ final class MovieQuizViewController: UIViewController {
         counterLabel.text = step.questionNumber
         textLabel.text = step.question
         imageView.image = step.image
+        
+        imageView.layer.borderWidth = 0
+        view.isUserInteractionEnabled = true
     }
     
     
@@ -87,7 +88,8 @@ final class MovieQuizViewController: UIViewController {
     private func restartGame() {
         self.currentQuestionIndex = 1
         self.gameResult?.correctAnswers = 0
-        self.questionFactory?.requestNextQuestion()
+        isVisibleLoadingIndicator(status: true)
+        self.questionFactory?.loadData()
     }
     
     private func makeBorder(color: UIColor) {
@@ -105,8 +107,7 @@ final class MovieQuizViewController: UIViewController {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
             guard let self = self else { return }
             self.showNextQuestionOrResult()
-            self.imageView.layer.borderWidth = 0
-            self.view.isUserInteractionEnabled = true}
+        }
     }
     
     private func showNextQuestionOrResult() {
@@ -142,7 +143,6 @@ final class MovieQuizViewController: UIViewController {
                                     message: "Невозможно загрузить данные",
                                     buttonText: "Попробовать ещё раз") { [weak self] in
             guard let self = self else { return }
-            self.restartGame()
             isVisibleLoadingIndicator(status: true)
             questionFactory?.loadData()
         }
@@ -151,7 +151,6 @@ final class MovieQuizViewController: UIViewController {
     }
 }
 
-// MARK: - Extensions
 // MARK: - QuestionFactoryDelegate
 
 extension MovieQuizViewController: QuestionFactoryDelegate {

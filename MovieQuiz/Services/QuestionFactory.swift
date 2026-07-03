@@ -3,11 +3,13 @@ import Foundation
 final class QuestionFactory: QuestionFactoryProtocol {
     
     // MARK: - Properties
-
+    
     private weak var delegate: QuestionFactoryDelegate?
     private let moviesLoader: MoviesLoadingProtocol
     
-    private var movies = [MostPopularMovie]()
+    private var moviesFromData = [MostPopularMovie]()
+    private var arrayOfMovies = [MostPopularMovie]()
+    private var currentMovie: MostPopularMovie?
     
     // MARK: MOCK
     ///private let questions: [QuizQuestion] = [
@@ -30,46 +32,17 @@ final class QuestionFactory: QuestionFactoryProtocol {
         self.moviesLoader = moviesLoader
     }
     
-
-
-    
     // MARK: - Public Methods
     
     func requestNextQuestion() {
+        randomMovie()
+        
         DispatchQueue.global().async { [weak self] in
-            guard let self = self else { return }
+            guard let self,
+                  let movie = currentMovie
+            else { return }
             
-            let index = (0..<self.movies.count).randomElement() ?? 0
-            
-            guard let movie = self.movies[safe: index] else { return }
-            
-            var imageData = Data()
-            
-            do {
-                imageData = try Data(contentsOf: movie.imageURL)
-            } catch {
-                print("Failed to load image")
-            }
-            
-            let rating = Float(movie.rating) ?? 0
-            
-            let numInQuestion: Int
-            
-            if Int(rating) != 0 && Int(rating) < 9 {
-                guard let randomNumber = (Int(rating)-1...Int(rating)+1).randomElement() else { return }
-                numInQuestion = randomNumber
-            } else {
-                guard let randomNumber = (Int(rating)-1...Int(rating)).randomElement() else { return }
-                numInQuestion = randomNumber
-            }
-            
-            let text = "Рейтинг этого фильма больше чем \(numInQuestion)?"
-            
-            let correctAnswer = rating > Float(numInQuestion)
-            
-            let question = QuizQuestion(image: imageData,
-                                        text: text,
-                                        correctAnswer: correctAnswer)
+            let question = makeQuestion(from: movie)
             
             DispatchQueue.main.async { [weak self] in
                 guard let self = self else { return }
@@ -85,12 +58,76 @@ final class QuestionFactory: QuestionFactoryProtocol {
                 guard let self = self else { return }
                 switch result {
                 case .success(let mostPopularMovies):
-                    self.movies = mostPopularMovies.items
+                    self.moviesFromData = mostPopularMovies.items
                     self.delegate?.didLoadDataFromServer()
                 case .failure(let error):
                     self.delegate?.didFailToLoadData(with: error)
                 }
             }
         }
+    }
+    
+    // MARK: - Private Methods
+    
+    private func randomMovie() {
+        if arrayOfMovies.isEmpty { makeArrayOfRandomMovies() }
+        
+        let index = (0..<self.arrayOfMovies.count).randomElement() ?? 0
+        
+        currentMovie = arrayOfMovies[safe:index]
+        
+        arrayOfMovies.remove(at: index)
+    }
+    
+    private func makeArrayOfRandomMovies() {
+        arrayOfMovies.removeAll()
+        for _ in 1...10 {
+            let index = (0..<self.moviesFromData.count).randomElement() ?? 0
+            guard let movieForQuestion = self.moviesFromData[safe: index] else { return }
+            self.arrayOfMovies.append(movieForQuestion)
+            self.moviesFromData.remove(at: index)
+        }
+    }
+    
+    private func loadImageData() -> Data {
+        var imageData = Data()
+        if let currentMovie = currentMovie {
+            do {
+                imageData = try Data(contentsOf: currentMovie.imageURL)
+            } catch {
+                _ = AlertModel(title: "Что-то пошло не так(",
+                                            message: ("Ошибка при загрузке изображения"),
+                                            buttonText: "Попробовать ещё раз") { [weak self] in
+                    guard let self = self else { return }
+                    _ = loadImageData()
+                }
+            }
+        }
+        return imageData
+    }
+    
+    private func makeQuestion(from movie: MostPopularMovie) -> QuizQuestion? {
+        
+        let imageData = loadImageData()
+        
+        let rating = Float(movie.rating) ?? 0
+        
+        let numInQuestion: Int
+        
+        if Int(rating) != 0 && Int(rating) < 9 {
+            guard let randomNumber = (Int(rating)-1...Int(rating)+1).randomElement() else { return nil }
+            numInQuestion = randomNumber
+        } else {
+            guard let randomNumber = (Int(rating)-1...Int(rating)).randomElement() else { return nil }
+            numInQuestion = randomNumber
+        }
+        
+        let text = "Рейтинг этого фильма больше чем \(numInQuestion)?"
+        
+        let correctAnswer = rating > Float(numInQuestion)
+        
+        return QuizQuestion(image: imageData,
+                            text: text,
+                            correctAnswer: correctAnswer)
     }
 }
