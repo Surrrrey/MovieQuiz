@@ -1,6 +1,6 @@
 import Foundation
 
-struct NetworkClient {
+struct NetworkClient: NetworkRoutingProtocol {
     
     // MARK: - Error Codes
     
