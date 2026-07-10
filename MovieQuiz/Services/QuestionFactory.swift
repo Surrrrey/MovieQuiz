@@ -36,20 +36,7 @@ final class QuestionFactory: QuestionFactoryProtocol {
     
     func requestNextQuestion() {
         randomMovie()
-        
-        DispatchQueue.global().async { [weak self] in
-            guard let self,
-                  let movie = currentMovie
-            else { return }
-            
-            let question = makeQuestion(from: movie)
-            
-            DispatchQueue.main.async { [weak self] in
-                guard let self = self else { return }
-                
-                self.delegate?.didReceiveNextQuestion(question: question)
-            }
-        }
+        loadQuestion()
     }
     
     func loadData() {
@@ -67,7 +54,28 @@ final class QuestionFactory: QuestionFactoryProtocol {
         }
     }
     
+    func reloadQuestion() {
+        loadQuestion()
+    }
+    
     // MARK: - Private Methods
+    
+    private func loadQuestion() {
+        DispatchQueue.global().async { [weak self] in
+            guard let self,
+                  let movie = currentMovie
+            else { return }
+            
+            let question = makeQuestion(from: movie)
+            
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self else { return }
+                
+                self.delegate?.didReceiveNextQuestion(question: question)
+            }
+        }
+
+    }
     
     private func randomMovie() {
         if arrayOfMovies.isEmpty { makeArrayOfRandomMovies() }
@@ -95,12 +103,7 @@ final class QuestionFactory: QuestionFactoryProtocol {
             do {
                 imageData = try Data(contentsOf: currentMovie.imageURL)
             } catch {
-                _ = AlertModel(title: "Что-то пошло не так(",
-                                            message: ("Ошибка при загрузке изображения"),
-                                            buttonText: "Попробовать ещё раз") { [weak self] in
-                    guard let self = self else { return }
-                    _ = loadImageData()
-                }
+                print("LoadImageError")
             }
         }
         return imageData
