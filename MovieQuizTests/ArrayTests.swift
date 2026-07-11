@@ -4,25 +4,17 @@ import XCTest
 class ArrayTests: XCTestCase {
     
     func testGetValueInRange() throws {
-        //Given
         let array = [0, 1, 2, 3, 4]
-        
-        //When
         let value = array[safe: 2]
         
-        //Then
         XCTAssertNotNil(value)
         XCTAssertEqual(value, array[2])
     }
     
     func testGetValueOutOfRange() throws {
-        //Given
         let array = [0, 1, 2, 3, 4]
-        
-        //When
         let value = array[safe: 5]
         
-        //Then
         XCTAssertNil(value)
     }
     

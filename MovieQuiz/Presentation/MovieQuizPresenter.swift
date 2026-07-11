@@ -17,8 +17,8 @@ final class MovieQuizPresenter {
     
     // MARK: - Init
     
-    init(viewController: MovieQuizViewController) {
-        self.viewController = viewController
+    init(viewController: MovieQuizViewControllerProtocol) {
+        self.viewController = viewController as? MovieQuizViewController
     }
     
     // MARK: - Public Methods
@@ -33,7 +33,6 @@ final class MovieQuizPresenter {
         self.questionFactory = questionFactory
     }
     
-    
     func yesButtonClicked() {
         checkAnswer(true)
     }
@@ -41,7 +40,6 @@ final class MovieQuizPresenter {
     func noButtonClicked() {
         checkAnswer(false)
     }
-    
     
     func restartGame() {
         resetQuestionIndex()
@@ -63,7 +61,7 @@ final class MovieQuizPresenter {
         currentQuestionIndex = 1
     }
     
-    private func convert(model: QuizQuestion) -> QuizStepViewModel {
+    func convert(model: QuizQuestion) -> QuizStepViewModel {
         return QuizStepViewModel(image: Data(model.image),
                                  question: model.text,
                                  questionNumber: "\(currentQuestionIndex)/\(questionsAmount)")
@@ -74,7 +72,6 @@ final class MovieQuizPresenter {
         let isCorrect = answer == currentQuestion.correctAnswer
         isCorrect ? self.gameResult?.correctAnswers += 1 : nil
         self.showAnswerResult(isCorrect: isCorrect)
-        
     }
     
     private func showAnswerResult(isCorrect: Bool) {
@@ -112,7 +109,6 @@ extension MovieQuizPresenter: QuestionFactoryDelegate {
     
     func didLoadDataFromServer() {
         self.questionFactory?.requestNextQuestion()
-        
     }
     
     func didFailToLoadData(with error: any Error) {

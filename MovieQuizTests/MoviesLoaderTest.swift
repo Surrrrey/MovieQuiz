@@ -47,7 +47,6 @@ struct StubNetworkClient: NetworkRoutingProtocol {
                     ]
                   }
                 """.data(using: .utf8) ?? Data()
-
     }
     
     // MARK: - Public Methods
@@ -59,7 +58,6 @@ struct StubNetworkClient: NetworkRoutingProtocol {
             handler(.success(expectedResponse))
         }
     }
-    
 }
 
 // MARK: - MoviesLoaderTest
@@ -67,20 +65,18 @@ struct StubNetworkClient: NetworkRoutingProtocol {
 class MoviesLoaderTest: XCTestCase {
     
     func testSuccessLoading() throws {
-        //Given
         let stubNetworkClient = StubNetworkClient(emulateError: false)
         let loader = MoviesLoader(networkClient: stubNetworkClient)
-        //When
+        
         let expectation = expectation(description: "Loading expectation")
         
         loader.loadMovies { result in
             
-        //Then
             switch result {
             case .success(let movies):
                 XCTAssertEqual(movies.items.count, 2)
                 expectation.fulfill()
-
+                
             case .failure(_):
                 XCTFail("Unexpected failure")
             }
@@ -90,14 +86,13 @@ class MoviesLoaderTest: XCTestCase {
     }
     
     func testFailureLoading() throws {
-        //Given
         let stubNetworkClient = StubNetworkClient(emulateError: true)
         let loader = MoviesLoader(networkClient: stubNetworkClient)
-        //When
+        
         let expectation = expectation(description: "Loading expectation")
         
         loader.loadMovies { result in
-            //Then
+            
             switch result {
             case .success(_):
                 XCTFail("Unexpected success")
@@ -107,6 +102,7 @@ class MoviesLoaderTest: XCTestCase {
                 expectation.fulfill()
             }
         }
+        
         waitForExpectations(timeout: 1)
     }
 }
