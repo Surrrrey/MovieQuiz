@@ -160,8 +160,8 @@
 		8F4738322848DE2A005DF65E /* Presentation */ = {
 			isa = PBXGroup;
 			children = (
-				578F0D553000B4EB001C6B1C /* MovieQuizPresenter.swift */,
 				573892342FDFBA040046B207 /* AlertPresenter.swift */,
+				578F0D553000B4EB001C6B1C /* MovieQuizPresenter.swift */,
 				AD1ABAB52831907B00B3E448 /* MovieQuizViewController.swift */,
 				AD1ABAB72831907B00B3E448 /* Main.storyboard */,
 			);
