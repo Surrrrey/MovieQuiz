@@ -13,12 +13,12 @@ final class MovieQuizPresenter {
     private var currentQuestion: QuizQuestion?
     private var statisticService: StatisticServiceProtocol = StatisticService()
     
-    private weak var viewController: MovieQuizViewController?
+    private weak var viewController: MovieQuizViewControllerProtocol?
     
     // MARK: - Init
     
     init(viewController: MovieQuizViewControllerProtocol) {
-        self.viewController = viewController as? MovieQuizViewController
+        self.viewController = viewController
     }
     
     // MARK: - Public Methods
@@ -78,7 +78,6 @@ final class MovieQuizPresenter {
         isCorrect == true
         ? viewController?.makeBorder(isAnswerCorrect: true)
         : viewController?.makeBorder(isAnswerCorrect: false)
-        self.viewController?.view.isUserInteractionEnabled = false
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
             guard let self = self else { return }
             self.showNextQuestionOrResult()
@@ -124,18 +123,5 @@ extension MovieQuizPresenter: QuestionFactoryDelegate {
         DispatchQueue.main.async { [weak self] in
             self?.viewController?.show(quiz: viewModel)
         }
-        guard let viewController,
-              question.image.isEmpty
-        else { return }
-        viewController.alertPresenter.show(in: viewController,
-                                           model: AlertModel(
-                                            title: "Что-то пошло не так(",
-                                            message: "Не получилось загрузить изображение",
-                                            buttonText: "Попробовать ещё раз") { [weak self] in
-                                                guard let self = self else
-                                                { return }
-                                                viewController.isVisibleLoadingIndicator(status: true)
-                                                self.questionFactory?.reloadQuestion()
-                                            })
     }
 }

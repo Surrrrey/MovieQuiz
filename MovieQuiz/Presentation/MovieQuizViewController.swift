@@ -31,10 +31,12 @@ final class MovieQuizViewController: UIViewController, MovieQuizViewControllerPr
     
     @IBAction private func yesButtonClicked(_ sender: UIButton) {
         self.presenter?.yesButtonClicked()
+        view.isUserInteractionEnabled = false
     }
     
     @IBAction private func noButtonClicked(_ sender: UIButton) {
         self.presenter?.noButtonClicked()
+        view.isUserInteractionEnabled = false
     }
     
     // MARK: - Public Methods
@@ -50,6 +52,19 @@ final class MovieQuizViewController: UIViewController, MovieQuizViewControllerPr
         
         imageView.layer.borderWidth = 0
         view.isUserInteractionEnabled = true
+        
+        guard step.image.isEmpty
+        else { return }
+        self.alertPresenter.show(in: self,
+                                 model: AlertModel(
+                                    title: "Что-то пошло не так(",
+                                    message: "Не получилось загрузить изображение",
+                                    buttonText: "Попробовать ещё раз") { [weak self] in
+                                        guard let self = self else
+                                        { return }
+                                        self.isVisibleLoadingIndicator(status: true)
+                                        presenter?.questionFactory?.reloadQuestion()
+                                    })
     }
     
     func show(quiz result: QuizResultsViewModel) {
