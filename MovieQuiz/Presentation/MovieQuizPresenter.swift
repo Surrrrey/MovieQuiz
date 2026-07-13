@@ -47,6 +47,14 @@ final class MovieQuizPresenter {
         questionFactory?.loadData()
     }
     
+    func retryLoadingQuestion() {
+        self.questionFactory?.reloadQuestion()
+    }
+    
+    func startLoadData() {
+        self.questionFactory?.loadData()
+    }
+    
     // MARK: - Private Methods
     
     private func isLastQuestion() -> Bool {

@@ -24,7 +24,7 @@ final class MovieQuizViewController: UIViewController, MovieQuizViewControllerPr
         isVisibleLoadingIndicator(status: true)
         presenter?.addQuestionFactory()
         presenter?.addGameResult()
-        presenter?.questionFactory?.loadData()
+        presenter?.startLoadData()
     }
     
     // MARK: - IBActions
@@ -63,7 +63,7 @@ final class MovieQuizViewController: UIViewController, MovieQuizViewControllerPr
                                         guard let self = self else
                                         { return }
                                         self.isVisibleLoadingIndicator(status: true)
-                                        presenter?.questionFactory?.reloadQuestion()
+                                        presenter?.retryLoadingQuestion()
                                     })
     }
     
@@ -104,7 +104,7 @@ final class MovieQuizViewController: UIViewController, MovieQuizViewControllerPr
                                     buttonText: "Попробовать ещё раз") { [weak self] in
             guard let self = self else { return }
             isVisibleLoadingIndicator(status: true)
-            self.presenter?.questionFactory?.loadData()
+            self.presenter?.startLoadData()
         }
         
         self.alertPresenter.show(in: self, model: errorModel)
