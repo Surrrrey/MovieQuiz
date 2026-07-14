@@ -10,7 +10,7 @@ final class QuestionFactory: QuestionFactoryProtocol {
     private var moviesFromData = [MostPopularMovie]()
     private var arrayOfMovies = [MostPopularMovie]()
     private var currentMovie: MostPopularMovie?
-        
+    
     // MARK: - Init
     
     init(delegate: QuestionFactoryDelegate?, moviesLoader: MoviesLoadingProtocol) {
@@ -110,9 +110,18 @@ final class QuestionFactory: QuestionFactoryProtocol {
             numInQuestion = randomNumber
         }
         
-        let text = "Рейтинг этого фильма больше чем \(numInQuestion)?"
+        var text = ""
+        var correctAnswer: Bool
         
-        let correctAnswer = rating > Float(numInQuestion)
+        let randomCountForText = (1...2).randomElement()
+        guard let randomCountForText else { return nil }
+        if randomCountForText % 2 == 0 {
+            text = "Рейтинг этого фильма больше чем \(numInQuestion)?"
+            correctAnswer = rating > Float(numInQuestion)
+        } else {
+            text = "Рейтинг этого фильма меньше чем \(numInQuestion)?"
+            correctAnswer = rating < Float(numInQuestion)
+        }
         
         return QuizQuestion(image: imageData,
                             text: text,
