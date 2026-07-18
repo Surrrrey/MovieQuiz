@@ -118,7 +118,7 @@ extension MovieQuizPresenter: QuestionFactoryDelegate {
         self.questionFactory?.requestNextQuestion()
     }
     
-    func didFailToLoadData(with error: any Error) {
+    func didFailToLoadData() {
         self.viewController?.showNetworkError()
     }
     

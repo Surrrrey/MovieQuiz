@@ -34,7 +34,7 @@ final class QuestionFactory: QuestionFactoryProtocol {
                     self.moviesFromData = mostPopularMovies.items
                     self.delegate?.didLoadDataFromServer()
                 case .failure(let error):
-                    self.delegate?.didFailToLoadData(with: error)
+                    self.delegate?.didFailToLoadData()
                 }
             }
         }
@@ -68,6 +68,11 @@ final class QuestionFactory: QuestionFactoryProtocol {
         let index = (0..<self.arrayOfMovies.count).randomElement() ?? 0
         
         currentMovie = arrayOfMovies[safe:index]
+        
+        guard arrayOfMovies[safe: index] != nil
+        else {
+            self.delegate?.didFailToLoadData()
+            return }
         
         arrayOfMovies.remove(at: index)
     }
